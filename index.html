@@ -30,14 +30,14 @@
   *{box-sizing:border-box;}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
   .wrap{max-width:1120px;margin:0 auto;padding:32px 28px 64px;}
-  .masthead{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-end;}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:6px;display:flex;justify-content:flex-end;align-items:flex-end;}
   .masthead h1{font-family:'Source Serif 4',serif;font-weight:600;font-size:30px;margin:0;letter-spacing:0.2px;}
   .masthead .sub{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);text-align:right;line-height:1.5;}
   .rule{border:none;border-top:1px solid var(--line);margin:0 0 22px;}
   nav{display:flex;gap:2px;margin-bottom:0;}
   .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.4px;text-transform:uppercase;padding:10px 18px;background:var(--paper-2);border:1px solid var(--line);border-bottom:none;border-radius:6px 6px 0 0;cursor:pointer;color:var(--ink-soft);}
   .tab.active{background:var(--paper);color:var(--ink);font-weight:500;border-color:var(--ink);}
-  section.panel{display:none;border:1px solid var(--ink);border-radius:0 6px 6px 6px;padding:22px 22px 22px;background:var(--paper);overflow:hidden;}
+  section.panel{display:none;border:1px solid var(--ink);border-radius:0 6px 6px 6px;padding:22px 26px 22px;background:var(--paper);overflow:hidden;}
   section.panel.active{display:block;}
   h2{font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;margin:0 0 4px;}
   h2[contenteditable]:hover{background:var(--paper-2);border-radius:4px;}
@@ -70,7 +70,8 @@
   button:hover{background:var(--ink);color:var(--paper);}
   button.ghost{border-color:var(--line);color:var(--ink-soft);}
   button.ghost:hover{background:var(--rust);color:var(--paper);border-color:var(--rust);}
-  .del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:2px 6px;}
+  .del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;padding:2px 4px;}
+  table tr > td:last-child, table tr > th:last-child{padding-right:2px;text-align:center;}
   .del:hover{color:var(--rust);background:none;}
   .metric{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);margin-top:14px;}
   .metric b{color:var(--ink);font-size:16px;}
@@ -84,7 +85,12 @@
   .tl-item{position:relative;padding-bottom:22px;}
   .tl-item:last-child{padding-bottom:2px;}
   .tl-dot{position:absolute;left:-33px;top:2px;width:14px;height:14px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1.5px var(--ink);}
-  .tl-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);margin-bottom:2px;}
+  .tl-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);margin-bottom:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+  .tl-freitext{outline:none;min-width:40px;}
+  .tl-freitext:empty:before{content:attr(data-ph);color:var(--line);}
+  .tl-freitext:focus{background:var(--paper-2);border-radius:3px;}
+  .tl-dateinput{border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);padding:1px 2px;border-radius:3px;}
+  .tl-dateinput:hover,.tl-dateinput:focus{background:var(--paper-2);outline:none;}
   .tl-title{font-size:14px;font-weight:500;margin-bottom:4px;}
   .tl-title[contenteditable]:focus{background:var(--paper-2);border-radius:3px;outline:none;}
   .tl-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -142,7 +148,6 @@
 <body>
 <div class="wrap">
   <div class="masthead">
-    <h1 id="appTitle" contenteditable="true" spellcheck="false" title="Klicken zum Umbenennen">Organization</h1>
     <div class="sub">
       <div id="today"></div>
       <button id="exportBtn" style="margin-top:6px;font-size:11px;padding:5px 12px;" title="Lädt alle Tabs als eine CSV-Datei herunter">Exportieren (CSV)</button>
@@ -235,7 +240,7 @@ const SECTIONS = [
       {k:"unternehmen", label:"Unternehmen", w:"10%"},
       {k:"rolle", label:"Rolle / Programm", w:"13%"},
       {k:"bereich", label:"Bereich", w:"7%"},
-      {k:"track", label:"Track", w:"7%", type:"status", opts:TRACK_OPTIONS},
+      {k:"track", label:"Bereich", w:"7%", type:"status", opts:TRACK_OPTIONS},
       {k:"status", label:"Status", w:"8%", type:"status", opts:STATUS_OPTIONS},
       {k:"start", label:"Beginn", w:"7%", type:"date"},
       {k:"ende", label:"Ende", w:"7%", type:"date"},
@@ -258,7 +263,7 @@ const SECTIONS = [
     key: "noten", label: "Noten", hasSubgrades: true,
     desc: "",
     cols: [
-      {k:"datum", label:"Datum", w:"8%", type:"date"},
+      {k:"datum", label:"Prüfung", w:"8%", type:"date"},
       {k:"semester", label:"Semester", w:"9%"},
       {k:"kurs", label:"Kurs", w:"23%"},
       {k:"ects", label:"ECTS", w:"6%", type:"number"},
@@ -309,7 +314,7 @@ const SECTIONS = [
     rows: []
   },
   {
-    key: "netzwerk", label: "Netzwerk",
+    key: "netzwerk", label: "Network",
     desc: "",
     reorder: true,
     cols: [
@@ -317,7 +322,7 @@ const SECTIONS = [
       {k:"firma", label:"Firma / Rolle", w:"24%"},
       {k:"bezug", label:"Bezug", w:"20%"},
       {k:"letzter", label:"Letzter Kontakt", w:"13%"},
-      {k:"naechster", label:"Nächster Schritt", w:"25%"},
+      {k:"naechster", label:"Notes", w:"25%"},
     ],
     rows: [
       {name:"", firma:"", bezug:"", letzter:"", naechster:""},
@@ -416,7 +421,7 @@ function buildTimelineEvents(){
         statusRow: r, statusOptions: STATUS_OPTIONS, jumpKey: 'bewerbungen'
       });
     }
-    if(r.start && r.start.trim()){
+    if(r.start && r.start.trim() && r.status === 'Angenommen'){
       const endLabel = r.ende && r.ende.trim() ? ` – ${formatDateDisplay(r.ende.trim())}` : '';
       events.push({
         dateLabel: formatDateDisplay(r.start.trim()) + endLabel,
@@ -428,12 +433,11 @@ function buildTimelineEvents(){
     }
   });
   (state.data.noten||[]).forEach(r => {
-    if(r.kurs && r.kurs.trim() && ((r.datum && r.datum.trim()) || (r.semester && r.semester.trim()))){
+    if(r.kurs && r.kurs.trim() && r.datum && r.datum.trim()){
       if(!r.status){ r.status = r.note ? "Bestanden" : "Geplant"; }
-      const hasExact = r.datum && r.datum.trim();
       events.push({
-        dateLabel: hasExact ? formatDateDisplay(r.datum.trim()) : r.semester,
-        sortKey: hasExact ? parseExactDateKey(r.datum.trim()) : parseDateKey(r.semester),
+        dateLabel: formatDateDisplay(r.datum.trim()),
+        sortKey: parseExactDateKey(r.datum.trim()),
         title: `Prüfung: ${r.kurs}`,
         source: 'pruefung', sourceLabel: 'Prüfung', notes: r.note ? `Note ${r.note}` : (r.bereich && r.bereich !== '–' ? r.bereich : ''),
         statusRow: r, statusOptions: NOTEN_STATUS, jumpKey: 'noten'
@@ -461,8 +465,17 @@ function buildTimelineEvents(){
     }
   });
   (state.data.timeline||[]).forEach((r, idx) => {
+    let label, key;
+    const von = (r.von||'').trim(), bis = (r.bis||'').trim();
+    if(von){
+      label = formatDateDisplay(von) + (bis ? ' – ' + formatDateDisplay(bis) : '');
+      key = parseExactDateKey(von);
+    } else {
+      label = r.zeitraum || '';
+      key = parseDateKey(r.zeitraum);
+    }
     events.push({
-      dateLabel: r.zeitraum, sortKey: parseDateKey(r.zeitraum),
+      dateLabel: label, sortKey: key,
       title: r.titel, source: 'manuell', sourceLabel: r.kategorie || 'Eigener Eintrag',
       notes: r.notizen, statusRow: r, statusOptions: TIMELINE_STATUS,
       editableTitle:true, refIdx: idx
@@ -502,9 +515,27 @@ function renderTimelinePanel(panel){
       const dateEl = document.createElement('div');
       dateEl.className = 'tl-date';
       if(ev.editableTitle){
-        dateEl.contentEditable = "true";
-        dateEl.textContent = ev.dateLabel || '';
-        dateEl.oninput = () => { state.data.timeline[ev.refIdx].zeitraum = dateEl.textContent; save(); };
+        const row = state.data.timeline[ev.refIdx];
+        const txt = document.createElement('span');
+        txt.contentEditable = "true";
+        txt.textContent = row.zeitraum || '';
+        txt.dataset.ph = 'Zeitraum, z.B. HS26';
+        txt.className = 'tl-freitext';
+        txt.oninput = () => { row.zeitraum = txt.textContent; save(); };
+        const vonInp = document.createElement('input');
+        vonInp.type = 'date'; vonInp.value = row.von || ''; vonInp.title = 'Von (Datum)';
+        vonInp.className = 'tl-dateinput';
+        vonInp.onchange = () => { row.von = vonInp.value; save(); render(); };
+        const bisInp = document.createElement('input');
+        bisInp.type = 'date'; bisInp.value = row.bis || ''; bisInp.title = 'Bis (optional)';
+        bisInp.className = 'tl-dateinput';
+        bisInp.onchange = () => { row.bis = bisInp.value; save(); render(); };
+        dateEl.appendChild(txt);
+        dateEl.appendChild(vonInp);
+        const dash = document.createElement('span');
+        dash.textContent = '–'; dash.style.margin = '0 3px'; dash.style.color = 'var(--line)';
+        dateEl.appendChild(dash);
+        dateEl.appendChild(bisInp);
       } else {
         dateEl.textContent = ev.dateLabel || '';
       }
@@ -598,7 +629,7 @@ function renderTimelinePanel(panel){
   const addBtn = document.createElement('button');
   addBtn.textContent = '+ Eigener Eintrag';
   addBtn.onclick = () => {
-    state.data.timeline.push({zeitraum:'', titel:'Neuer Eintrag', kategorie:'', status:'Geplant', notizen:''});
+    state.data.timeline.push({zeitraum:'', von:'', bis:'', titel:'Neuer Eintrag', kategorie:'', status:'Geplant', notizen:''});
     save(); render();
   };
   actions.appendChild(addBtn);
@@ -664,7 +695,6 @@ function render(){
     if(section.isNotes){
       const ta = document.createElement('textarea');
       ta.value = state.freeNotes || '';
-      ta.placeholder = 'Hier reinschreiben, was dir einfällt – Ideen, Gesprächsnotizen, offene Fragen…';
       ta.style.cssText = 'width:100%;min-height:420px;font-family:\'IBM Plex Sans\',sans-serif;font-size:14px;line-height:1.6;border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--paper-2);color:var(--ink);resize:vertical;outline:none;box-sizing:border-box;';
       ta.onfocus = () => { ta.style.borderColor = 'var(--gold)'; };
       ta.onblur = () => { ta.style.borderColor = 'var(--line)'; };
@@ -991,9 +1021,10 @@ function updateMetric(section, panel){
     const note = parseFloat(r.note);
     if(!isNaN(ects)) totalEcts += ects;
     const status = r.status || (r.note ? "Bestanden" : "Geplant");
+    const zaehltImBachelor = r.bereich && r.bereich !== '–';
     if(status === "Bestanden"){
       bestanden++;
-      if(!isNaN(ects) && !isNaN(note)){ sumWeighted += ects*note; sumEcts += ects; }
+      if(!isNaN(ects) && !isNaN(note) && zaehltImBachelor){ sumWeighted += ects*note; sumEcts += ects; }
     } else if(status === "Nicht bestanden"){
       nichtBestanden++;
     } else {
@@ -1001,7 +1032,7 @@ function updateMetric(section, panel){
     }
   });
   const avg = sumEcts > 0 ? (sumWeighted/sumEcts).toFixed(2) : "–";
-  let txt = `Ø gewichteter Schnitt (bestanden): <b>${avg}</b> · ${sumEcts} ECTS bestanden · Gesamt aller Einträge: <b>${totalEcts} ECTS</b> · ${bestanden} bestanden`;
+  let txt = `Ø Schnitt (Bachelor-Kurse): <b>${avg}</b> · ${sumEcts} ECTS bestanden · Gesamt aller Einträge: <b>${totalEcts} ECTS</b> · ${bestanden} bestanden`;
   if(geplant) txt += ` · ${geplant} geplant/angemeldet`;
   if(nichtBestanden) txt += ` · ${nichtBestanden} nicht bestanden`;
   el.innerHTML = txt;
@@ -1058,11 +1089,6 @@ function renderCreditOverview(rows, panel){
     });
     html += '</div>';
   });
-
-  const unz = bestandenBy['–'] + geplantBy['–'];
-  if(unz){
-    html += `<div class="credit-note"><b>${unz} ECTS ohne Bereich</b> – bitte in der Spalte "Bereich" zuordnen.</div>`;
-  }
 
   // ---- DSF-Zertifikat (separat, zählt nicht in den Bachelor) ----
   const dsfBest = {}, dsfPlan = {};
@@ -1342,14 +1368,7 @@ async function init(){
     warnEl.textContent = '';
   }
 
-  const appTitleEl = document.getElementById('appTitle');
-  if(state.appTitle) appTitleEl.textContent = state.appTitle;
-  document.title = appTitleEl.textContent;
-  appTitleEl.oninput = () => {
-    state.appTitle = appTitleEl.textContent.trim() || 'Organization';
-    document.title = state.appTitle;
-    save();
-  };
+
 }
 init();
 </script>
