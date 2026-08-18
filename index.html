@@ -63,6 +63,8 @@
   .st-bachelorarbeit{background:var(--plum-fill);color:var(--plum);border-color:var(--plum);}
   .st-skillsundsprachen{background:var(--steel-fill);color:var(--steel);border-color:var(--steel);}
   .st-fokusbereiche{background:var(--emerald-fill);color:var(--emerald);border-color:var(--emerald);}
+  .st-workshopfundamentals,.st-datascienceincontext,.st-elective{background:var(--steel-fill);color:var(--steel);border-color:var(--steel);}
+  .dsf-group{border-left:3px solid var(--steel);padding-left:12px;margin-top:18px;}
   .row-actions{display:flex;gap:10px;margin-top:12px;align-items:center;}
   button{font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;padding:7px 14px;border-radius:5px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;}
   button:hover{background:var(--ink);color:var(--paper);}
@@ -216,6 +218,14 @@ const CREDIT_RULES = [
   {bereich:"Fokusbereiche",       min:12, max:24, gruppe:"Kontextstudium"},
 ];
 const GRUPPEN_TOTAL = {"Fachstudium":84, "Bachelor-Arbeit":12, "Kontextstudium":24};
+// DSF-Zertifikat (26 ECTS) – zählt separat, Kurse können gleichzeitig im Bachelor zählen
+const DSF_OPTIONS = ["–","Workshop Fundamentals","Data Science in Context","Elective"];
+const DSF_RULES = [
+  {teil:"Workshop Fundamentals",   min:10, max:10},
+  {teil:"Data Science in Context", min:4,  max:4},
+  {teil:"Elective",                min:12, max:12},
+];
+const DSF_TOTAL = 26;
 
 const SECTIONS = [
   {
@@ -254,11 +264,12 @@ const SECTIONS = [
       {k:"ects", label:"ECTS", w:"6%", type:"number"},
       {k:"note", label:"Note", w:"6%", type:"number"},
       {k:"status", label:"Status", w:"10%", type:"status", opts:NOTEN_STATUS},
-      {k:"bereich", label:"Bereich", w:"17%", type:"status", opts:BEREICH_OPTIONS},
-      {k:"notizen", label:"Notizen", w:"17%"},
+      {k:"bereich", label:"Bereich", w:"14%", type:"status", opts:BEREICH_OPTIONS},
+      {k:"dsf", label:"DSF", w:"13%", type:"status", opts:DSF_OPTIONS},
+      {k:"notizen", label:"Notizen", w:"12%"},
     ],
     rows: [
-      {datum:"", semester:"", kurs:"", ects:"", note:"", status:"Geplant", bereich:"–", notizen:""},
+      {datum:"", semester:"", kurs:"", ects:"", note:"", status:"Geplant", bereich:"–", dsf:"–", notizen:""},
     ],
     metric: true, reorder: true
   },
@@ -805,19 +816,7 @@ function render(){
           try{ e.dataTransfer.setData('text/plain', String(ri)); }catch(err){}
         };
         grip.ondragend = () => { dragCtx = null; clearDragOverStyles(table); };
-        const upBtn = document.createElement('button');
-        upBtn.className = 'del'; upBtn.innerHTML = '↑'; upBtn.title = 'Nach oben verschieben';
-        upBtn.disabled = ri === 0;
-        upBtn.style.opacity = ri === 0 ? '0.3' : '1';
-        upBtn.onclick = () => { if(ri>0){ [rows[ri-1], rows[ri]] = [rows[ri], rows[ri-1]]; save(); render(); } };
-        const downBtn = document.createElement('button');
-        downBtn.className = 'del'; downBtn.innerHTML = '↓'; downBtn.title = 'Nach unten verschieben';
-        downBtn.disabled = ri === rows.length-1;
-        downBtn.style.opacity = ri === rows.length-1 ? '0.3' : '1';
-        downBtn.onclick = () => { if(ri<rows.length-1){ [rows[ri+1], rows[ri]] = [rows[ri], rows[ri+1]]; save(); render(); } };
         tdMove.appendChild(grip);
-        tdMove.appendChild(upBtn);
-        tdMove.appendChild(downBtn);
         tr.appendChild(tdMove);
 
         tr.ondragover = (e) => {
@@ -1063,6 +1062,37 @@ function renderCreditOverview(rows, panel){
   const unz = bestandenBy['–'] + geplantBy['–'];
   if(unz){
     html += `<div class="credit-note"><b>${unz} ECTS ohne Bereich</b> – bitte in der Spalte "Bereich" zuordnen.</div>`;
+  }
+
+  // ---- DSF-Zertifikat (separat, zählt nicht in den Bachelor) ----
+  const dsfBest = {}, dsfPlan = {};
+  DSF_OPTIONS.forEach(o => { dsfBest[o] = 0; dsfPlan[o] = 0; });
+  rows.forEach(r => {
+    const e = parseFloat(r.ects);
+    if(isNaN(e) || !r.dsf || r.dsf === '–') return;
+    if(r.status === 'Bestanden') dsfBest[r.dsf] += e;
+    else if(r.status !== 'Nicht bestanden') dsfPlan[r.dsf] += e;
+  });
+  const dsfSumBest = DSF_RULES.reduce((s,r) => s + dsfBest[r.teil], 0);
+  const dsfSumPlan = DSF_RULES.reduce((s,r) => s + dsfPlan[r.teil], 0);
+  if(dsfSumBest || dsfSumPlan){
+    html += `<div class="credit-group dsf-group"><div class="credit-group-head">DSF-Zertifikat <span>${dsfSumBest}${dsfSumPlan?` (+${dsfSumPlan} geplant)`:''} / ${DSF_TOTAL} ECTS</span></div>`;
+    DSF_RULES.forEach(rule => {
+      const done = dsfBest[rule.teil], plan = dsfPlan[rule.teil];
+      const pctDone = Math.min(100, (done/rule.max)*100);
+      const pctPlan = Math.min(100 - pctDone, (plan/rule.max)*100);
+      let statusTxt, statusCls;
+      if(done + plan > rule.max){ statusTxt = `über ${rule.max}`; statusCls = 'cr-over'; }
+      else if(done >= rule.min){ statusTxt = 'erfüllt'; statusCls = 'cr-ok'; }
+      else { statusTxt = `noch ${Math.max(0, rule.min - done - plan)} offen`; statusCls = 'cr-open'; }
+      html += `<div class="credit-row">
+        <div class="credit-label">${rule.teil}<span class="credit-range">${rule.min} ECTS</span></div>
+        <div class="credit-bar"><div class="cb-done" style="width:${pctDone}%"></div><div class="cb-plan" style="width:${pctPlan}%"></div></div>
+        <div class="credit-num">${done}${plan?` (+${plan})`:''}</div>
+        <div class="credit-status ${statusCls}">${statusTxt}</div>
+      </div>`;
+    });
+    html += `<div class="credit-note">Zählt separat zum Bachelor – Kurse können gleichzeitig einem Bachelor-Bereich zugeordnet sein.</div></div>`;
   }
 
   box.innerHTML = html;
