@@ -220,7 +220,7 @@ const GRUPPEN_TOTAL = {"Fachstudium":84, "Bachelor-Arbeit":12, "Kontextstudium":
 const SECTIONS = [
   {
     key: "bewerbungen", label: "Bewerbungen", hasNotes: true, reorder: true,
-    desc: "Praktikums- und Programmbewerbungen im Überblick. Beginn/Ende eintragen für den Praktikumszeitraum – erscheint automatisch in der Timeline. Track (Finance/Consulting) einordnen – Consulting wird kursiv dargestellt. Über das ✎-Symbol ausführliche Notizen aufklappen, per ⠿ ziehen oder ↑↓ die Reihenfolge ändern.",
+    desc: "",
     cols: [
       {k:"unternehmen", label:"Unternehmen", w:"10%"},
       {k:"rolle", label:"Rolle / Programm", w:"13%"},
@@ -239,14 +239,14 @@ const SECTIONS = [
   },
   {
     key: "timeline", label: "Timeline", isTimeline: true,
-    desc: "Automatisch zusammengeführt aus Bewerbungen, Noten und Uniplanung – plus eigene Einträge. Status direkt hier per Dropdown ändern, das wirkt sich sofort auf den Ursprungs-Tab aus.",
+    desc: "",
     rows: [
 
     ]
   },
   {
     key: "noten", label: "Noten", hasSubgrades: true,
-    desc: "Kurse mit ECTS, Bereich und optionalem Datum – auch geplante Kurse eintragen. Die Credit-Übersicht unten zeigt, wie viele ECTS pro Bereich zusammenkommen und ob die Vorgaben erfüllt sind. Über das %-Symbol Teilleistungen (z.B. 20% Quiz, 80% Prüfung) erfassen.",
+    desc: "",
     cols: [
       {k:"datum", label:"Datum", w:"8%", type:"date"},
       {k:"semester", label:"Semester", w:"9%"},
@@ -264,7 +264,7 @@ const SECTIONS = [
   },
   {
     key: "uni", label: "Uniplanung",
-    desc: "Master-Programme im Vergleich. Bewerbungsfristen erscheinen automatisch in der Timeline.",
+    desc: "",
     reorder: true,
     cols: [
       {k:"programm", label:"Programm", w:"24%"},
@@ -279,7 +279,7 @@ const SECTIONS = [
   },
   {
     key: "todos", label: "To-Do",
-    desc: "Offene Aufgaben rund um Studium und Bewerbungen – abhaken, sobald erledigt. Einträge mit Frist erscheinen automatisch in der Timeline.",
+    desc: "",
     cols: [
       {k:"erledigt", label:"Erl.", w:"6%", type:"checkbox"},
       {k:"aufgabe", label:"Aufgabe", w:"26%"},
@@ -294,12 +294,12 @@ const SECTIONS = [
   },
   {
     key: "notes", label: "Notes", isNotes: true,
-    desc: "Freier Notizblock – alles, was sonst nirgends reinpasst. Wird automatisch gespeichert.",
+    desc: "",
     rows: []
   },
   {
     key: "netzwerk", label: "Netzwerk",
-    desc: "Kontakte, Mentor:innen, nächste Schritte.",
+    desc: "",
     reorder: true,
     cols: [
       {k:"name", label:"Name", w:"18%"},
@@ -634,11 +634,15 @@ function render(){
       tab.textContent = state.labels[section.key];
       save();
     };
-    const descP = document.createElement('p');
-    descP.className = 'desc';
-    descP.textContent = section.desc;
     panel.appendChild(h2);
-    panel.appendChild(descP);
+    if(section.desc){
+      const descP = document.createElement('p');
+      descP.className = 'desc';
+      descP.textContent = section.desc;
+      panel.appendChild(descP);
+    } else {
+      h2.style.marginBottom = '14px';
+    }
 
     if(section.isTimeline){
       renderTimelinePanel(panel);
