@@ -64,6 +64,8 @@
   .st-skillsundsprachen{background:var(--steel-fill);color:var(--steel);border-color:var(--steel);}
   .st-fokusbereiche{background:var(--emerald-fill);color:var(--emerald);border-color:var(--emerald);}
   .st-workshopfundamentals,.st-datascienceincontext,.st-elective{background:var(--steel-fill);color:var(--steel);border-color:var(--steel);}
+  .st-deutsch{background:var(--slate-fill);color:var(--slate);border-color:var(--slate);}
+  .st-englisch{background:var(--blue-fill);color:var(--blue);border-color:var(--blue);}
   .dsf-group{border-left:3px solid var(--steel);padding-left:12px;margin-top:18px;}
   .row-actions{display:flex;gap:10px;margin-top:12px;align-items:center;}
   button{font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:500;padding:7px 14px;border-radius:5px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;}
@@ -231,6 +233,8 @@ const DSF_RULES = [
   {teil:"Elective",                min:12, max:12},
 ];
 const DSF_TOTAL = 26;
+const SPRACHE_OPTIONS = ["–","Deutsch","Englisch"];
+const ENGLISCH_MIN = 12;
 
 const SECTIONS = [
   {
@@ -269,12 +273,13 @@ const SECTIONS = [
       {k:"ects", label:"ECTS", w:"6%", type:"number"},
       {k:"note", label:"Note", w:"6%", type:"number"},
       {k:"status", label:"Status", w:"10%", type:"status", opts:NOTEN_STATUS},
-      {k:"bereich", label:"Bereich", w:"14%", type:"status", opts:BEREICH_OPTIONS},
-      {k:"dsf", label:"DSF", w:"13%", type:"status", opts:DSF_OPTIONS},
-      {k:"notizen", label:"Notizen", w:"12%"},
+      {k:"bereich", label:"Bereich", w:"12%", type:"status", opts:BEREICH_OPTIONS},
+      {k:"sprache", label:"Sprache", w:"10%", type:"status", opts:SPRACHE_OPTIONS},
+      {k:"dsf", label:"DSF", w:"11%", type:"status", opts:DSF_OPTIONS},
+      {k:"notizen", label:"Notizen", w:"10%"},
     ],
     rows: [
-      {datum:"", semester:"", kurs:"", ects:"", note:"", status:"Geplant", bereich:"–", dsf:"–", notizen:""},
+      {datum:"", semester:"", kurs:"", ects:"", note:"", status:"Geplant", bereich:"–", sprache:"–", dsf:"–", notizen:""},
     ],
     metric: true, reorder: true
   },
@@ -312,22 +317,8 @@ const SECTIONS = [
     key: "notes", label: "Notes", isNotes: true,
     desc: "",
     rows: []
-  },
-  {
-    key: "netzwerk", label: "Network",
-    desc: "",
-    reorder: true,
-    cols: [
-      {k:"name", label:"Name", w:"18%"},
-      {k:"firma", label:"Firma / Rolle", w:"24%"},
-      {k:"bezug", label:"Bezug", w:"20%"},
-      {k:"letzter", label:"Letzter Kontakt", w:"13%"},
-      {k:"naechster", label:"Notes", w:"25%"},
-    ],
-    rows: [
-      {name:"", firma:"", bezug:"", letzter:"", naechster:""},
-    ]
-  },
+  }
+
 ];
 
 let state = null;
@@ -1089,6 +1080,31 @@ function renderCreditOverview(rows, panel){
     });
     html += '</div>';
   });
+
+  // ---- Sprachanforderung: mind. 12 ECTS auf Englisch ----
+  let engBest = 0, engPlan = 0;
+  rows.forEach(r => {
+    const e = parseFloat(r.ects);
+    if(isNaN(e) || r.sprache !== 'Englisch') return;
+    if(!r.bereich || r.bereich === '–') return;
+    if(r.status === 'Bestanden') engBest += e;
+    else if(r.status !== 'Nicht bestanden') engPlan += e;
+  });
+  {
+    const pctDone = Math.min(100, (engBest/ENGLISCH_MIN)*100);
+    const pctPlan = Math.min(100 - pctDone, (engPlan/ENGLISCH_MIN)*100);
+    let sTxt, sCls;
+    if(engBest >= ENGLISCH_MIN){ sTxt = 'erfüllt'; sCls = 'cr-ok'; }
+    else if(engBest + engPlan >= ENGLISCH_MIN){ sTxt = 'mit geplanten erfüllt'; sCls = 'cr-open'; }
+    else { sTxt = `noch ${ENGLISCH_MIN - engBest - engPlan} offen`; sCls = 'cr-open'; }
+    html += `<div class="credit-group"><div class="credit-group-head">Sprachanforderung <span>${engBest}${engPlan?` (+${engPlan} geplant)`:''} / ${ENGLISCH_MIN} ECTS</span></div>
+      <div class="credit-row">
+        <div class="credit-label">Kurse auf Englisch<span class="credit-range">mind. ${ENGLISCH_MIN} ECTS</span></div>
+        <div class="credit-bar"><div class="cb-done" style="width:${pctDone}%"></div><div class="cb-plan" style="width:${pctPlan}%"></div></div>
+        <div class="credit-num">${engBest}${engPlan?` (+${engPlan})`:''}</div>
+        <div class="credit-status ${sCls}">${sTxt}</div>
+      </div></div>`;
+  }
 
   // ---- DSF-Zertifikat (separat, zählt nicht in den Bachelor) ----
   const dsfBest = {}, dsfPlan = {};
