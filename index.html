@@ -45,7 +45,7 @@
   .desc{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;}
   table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
   td, th{overflow-wrap:anywhere;}
-  th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.3px;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--ink);padding:6px 8px;font-weight:500;}
+  th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.3px;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--ink);padding:6px 8px;font-weight:500;white-space:nowrap;overflow-wrap:normal;}
   td{border-bottom:1px solid var(--line);padding:4px 8px;vertical-align:top;}
   td[contenteditable], select.cellsel{width:100%;min-height:20px;outline:none;font-family:inherit;font-size:13px;background:transparent;border:none;color:var(--ink);}
   td[contenteditable]:focus{background:var(--paper-2);border-radius:3px;}
@@ -65,6 +65,8 @@
   .st-fokusbereiche{background:var(--emerald-fill);color:var(--emerald);border-color:var(--emerald);}
   .st-workshopfundamentals,.st-datascienceincontext,.st-elective{background:var(--steel-fill);color:var(--steel);border-color:var(--steel);}
   .st-deutsch{background:var(--slate-fill);color:var(--slate);border-color:var(--slate);}
+  .st-ja{background:var(--emerald-fill);color:var(--emerald);border-color:var(--emerald);}
+  .st-nein{background:var(--slate-fill);color:var(--slate);border-color:var(--slate);}
   .st-englisch{background:var(--blue-fill);color:var(--blue);border-color:var(--blue);}
   .dsf-group{border-left:3px solid var(--steel);padding-left:12px;margin-top:18px;}
   .row-actions{display:flex;gap:10px;margin-top:12px;align-items:center;}
@@ -108,7 +110,7 @@
   .tl-notes{font-size:12px;color:var(--ink-soft);margin-top:3px;}
   .tl-undated-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:0.3px;margin:18px 0 10px;}
 
-  .notes-toggle{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:14px;padding:2px 6px;}
+  .notes-toggle{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:14px;padding:2px 6px;white-space:nowrap;}
   .notes-toggle:hover{color:var(--gold);background:none;}
   .notes-toggle.on{color:var(--gold);}
   .notes-row td{background:var(--paper-2);padding:10px 14px;}
@@ -235,6 +237,7 @@ const DSF_RULES = [
 ];
 const DSF_TOTAL = 26;
 const SPRACHE_OPTIONS = ["–","Deutsch","Englisch"];
+const SCHNITT_OPTIONS = ["Ja","Nein"];
 const ENGLISCH_MIN = 12;
 
 const SECTIONS = [
@@ -273,14 +276,15 @@ const SECTIONS = [
       {k:"kurs", label:"Kurs", w:"23%"},
       {k:"ects", label:"ECTS", w:"6%", type:"number"},
       {k:"note", label:"Note", w:"6%", type:"number"},
-      {k:"status", label:"Status", w:"10%", type:"status", opts:NOTEN_STATUS},
-      {k:"bereich", label:"Bereich", w:"12%", type:"status", opts:BEREICH_OPTIONS},
+      {k:"status", label:"Status", w:"9%", type:"status", opts:NOTEN_STATUS},
+      {k:"schnitt", label:"Schnitt", w:"8%", type:"status", opts:SCHNITT_OPTIONS},
+      {k:"bereich", label:"Bereich", w:"10%", type:"status", opts:BEREICH_OPTIONS},
       {k:"sprache", label:"Sprache", w:"10%", type:"status", opts:SPRACHE_OPTIONS},
       {k:"dsf", label:"DSF", w:"11%", type:"status", opts:DSF_OPTIONS},
       {k:"notizen", label:"Notizen", w:"10%"},
     ],
     rows: [
-      {datum:"", semester:"", kurs:"", ects:"", note:"", status:"Geplant", bereich:"–", sprache:"–", dsf:"–", notizen:""},
+      {datum:"", semester:"", kurs:"", ects:"", note:"", status:"Geplant", schnitt:"Ja", bereich:"–", sprache:"–", dsf:"–", notizen:""},
     ],
     metric: true, reorder: true
   },
@@ -817,6 +821,7 @@ function render(){
         teilBtn.textContent = tlCount ? `%(${tlCount})` : '%';
         teilBtn.title = 'Teilleistungen (z.B. 20% Quiz, 80% Prüfung)';
         teilBtn.style.fontSize = '10.5px';
+        teilBtn.style.whiteSpace = 'nowrap';
         teilBtn.onclick = () => {
           if(expandedTeil.has(row.id)) expandedTeil.delete(row.id); else expandedTeil.add(row.id);
           render();
@@ -1014,9 +1019,10 @@ function updateMetric(section, panel){
     if(!isNaN(ects)) totalEcts += ects;
     const status = r.status || (r.note ? "Bestanden" : "Geplant");
     const zaehltImBachelor = r.bereich && r.bereich !== '–';
+    const schnittRelevant = (r.schnitt || 'Ja') !== 'Nein';
     if(status === "Bestanden"){
       bestanden++;
-      if(!isNaN(ects) && !isNaN(note) && zaehltImBachelor){ sumWeighted += ects*note; sumEcts += ects; }
+      if(!isNaN(ects) && !isNaN(note) && zaehltImBachelor && schnittRelevant){ sumWeighted += ects*note; sumEcts += ects; }
     } else if(status === "Nicht bestanden"){
       nichtBestanden++;
     } else {
@@ -1336,7 +1342,10 @@ async function init(){
   }catch(e){
     state = { activeTab: 0, data: defaultData };
   }
-  (state.data.noten||[]).forEach(r => { if(!r.status){ r.status = r.note ? "Bestanden" : "Geplant"; } });
+  (state.data.noten||[]).forEach(r => {
+    if(!r.status){ r.status = r.note ? "Bestanden" : "Geplant"; }
+    if(!r.schnitt){ r.schnitt = "Ja"; }
+  });
   migrate();
   render();
   document.getElementById('exportBtn').onclick = exportCsv;
